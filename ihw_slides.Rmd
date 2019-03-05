@@ -1,11 +1,9 @@
 ---
-title: "Multiple hypothesis testing: IHW approach"
-author: "<br>Rene Welch<br>"
-date: "updated: `r Sys.Date()`"
+title: "[Data-driven hypothesis weighting increases detection power in genome-scale multiple testing](https://www.nature.com/articles/nmeth.3885)"
 output:
   xaringan::moon_reader:
     lib_dir: libs
-    css: ["shinobi", "ninjutsu"]
+    css: ["shinobi", "ninjutsu","assets/bioctheme.css"]
     seal: true 
     self_contained: false
     nature:
@@ -16,3 +14,116 @@ output:
 editor_options: 
   chunk_output_type: console
 ---
+layout: false
+class: middle center
+
+```{r packages,include=FALSE}
+
+library(here)
+library(ggsci)
+library(magrittr)
+library(tidyverse)
+
+
+```
+
+
+```{r paper_fig,out.width=600,echo=FALSE}
+
+knitr::include_graphics("paper_figs/paper.png",dpi = 1200)
+
+```
+
+---
+layout: false
+class: middle center
+
+.font5[.light-green[Why this paper?]]
+
+.font3.black[
+
+This is a very general method to do .alert[multiple hypothesis testing]
+
+Can dramatically improve the number of discoveries, while controlling the .alert[false discovery rate]
+
+]
+
+
+---
+layout: false
+class: top center
+
+.font4[.light-green[Multiple hypothesis testing]]
+
+.font2.black[
+
+.content[
+
+.alert[Hypothesis testing:] $H_0: \theta \in \Theta_0$ vs. $H_1: \theta \in \Theta_1$. 
+
+.alert[Multiple hypothesis testing:] $H_{0i}$ vs. $H_{1i}$ for $i=1,\cdots,m$.
+
+.alert[Solution:] For each test, we get a p.value $p_1,\cdots, p_m$, and then use 
+
+.alert[p.adjust(pvalues,method = "BH")],
+
+.alert[qvalue(pvalues)]  (equivalent to BH with some assumptions)
+
+and call it a day
+
+]
+]
+
+
+```{r loadlibs, message = FALSE, warning = FALSE,cache=TRUE,include=FALSE}
+library("DESeq2")
+library("dplyr")
+data("airway", package = "airway")
+dds <- DESeqDataSet(se = airway, design = ~ cell + dex) %>% DESeq
+deRes <- as.data.frame(results(dds))
+```
+
+---
+layout: false
+class: top center
+
+.font4[.light-green[False discovery Rate]]
+
+.font3.black[
+
+.center[
+
+.content[
+
+| | Not significant  | Significant | total | 
+| :------------: | :----------: | :--------: | 
+||    (p.value > t) |  (p.value <= t) |  |
+|  Null true     |   U | V | m0 |
+| Alternative true | T | S | m1 |
+| total | W | R| m | 
+]
+
+want to estimate .alert[FDR = E[V/R | R > 0]P(R > 0)]
+
+]]
+
+---
+layout: false
+class: middle center bg-main1
+
+
+.font5[.light-green[Extra slides]]
+
+---
+layout: false
+class: middle center
+
+.font4[.light-green[[qvalue](http://bioconductor.org/packages/release/bioc/html/qvalue.html) is equivalent to BH]]
+
+```{r qvalue,include=TRUE,out.width=530,echo= FALSE}
+
+knitr::include_graphics("paper_figs/qvalue.png",dpi = 1200)
+
+```
+
+
