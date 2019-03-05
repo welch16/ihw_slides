@@ -1,0 +1,9 @@
+Application	Covariate
+Differential expression	Total read counts per gene across all samples
+GWAS	Minor allele frequency
+eQTL	"Distance between variant, and locus of expression or commembership in TAD"
+hQTL	"Distance between variant, and locus of expression or commembership in TAD"
+mQTL	"Distance between variant, and locus of expression or commembership in TAD"
+t-test	Overall variance
+Two-sided tests	Sign of the effect
+etc	"Signal quality, sample size"
