@@ -1,5 +1,6 @@
 ---
 title: "[Data-driven hypothesis weighting increases detection power in genome-scale multiple testing](https://www.nature.com/articles/nmeth.3885)"
+date: (2019-03-07)
 output:
   xaringan::moon_reader:
     lib_dir: libs
@@ -23,6 +24,25 @@ library(here)
 library(ggsci)
 library(magrittr)
 library(tidyverse)
+library(kableExtra)
+
+library(DESeq2)
+library(IHW)
+
+theme_set(
+  theme_bw()+
+    theme(
+      strip.text = element_text(size = 16),
+      strip.background = element_blank(),
+      axis.text = element_text(size = 14),
+      legend.text = element_text(size =14),
+      axis.title = element_text(size = 16),
+      legend.title = element_text(size = 16)
+      
+    )
+)
+
+
 
 
 ```
@@ -38,7 +58,7 @@ knitr::include_graphics("paper_figs/paper.png",dpi = 1200)
 layout: false
 class: middle center
 
-.font5[.light-green[Why this paper?]]
+.font5[.alert[Why this paper?]]
 
 .font3.black[
 
@@ -53,7 +73,7 @@ Can dramatically improve the number of discoveries, while controlling the .alert
 layout: false
 class: top center
 
-.font4[.light-green[Multiple hypothesis testing]]
+.font4[.alert[Multiple hypothesis testing]]
 
 .font2.black[
 
@@ -75,19 +95,11 @@ and call it a day
 ]
 
 
-```{r loadlibs, message = FALSE, warning = FALSE,cache=TRUE,include=FALSE}
-library("DESeq2")
-library("dplyr")
-data("airway", package = "airway")
-dds <- DESeqDataSet(se = airway, design = ~ cell + dex) %>% DESeq
-deRes <- as.data.frame(results(dds))
-```
-
 ---
 layout: false
 class: top center
 
-.font4[.light-green[False discovery Rate]]
+.font4[.alert[False discovery Rate]]
 
 .font3.black[
 
@@ -103,22 +115,364 @@ class: top center
 | total | W | R| m | 
 ]
 
-want to estimate .alert[FDR = E[V/R | R > 0]P(R > 0)]
+want to control .alert[FDR = E[V/R | R > 0]P(R > 0)]
 
 ]]
 
 ---
 layout: false
+class: top center
+
+.font4[.alert[False discovery Rate]]
+
+.font3.black[
+
+The general idea is to define for threshold t:
+]
+
+.font2[
+\begin{aligned}
+V(t) &= \# (\text{true null } p_i \leq t) \\
+R(t) &= \# (p_i \leq t ) \\
+\end{aligned}
+]
+
+.font2[
+\begin{aligned}
+\widehat{\mbox{FDR}}(t) &= \hat{\pi}_0 (\lambda) mt / (R(t)\wedge 1)
+\end{aligned}
+]
+.font3[Can be done with the [qvalue package](http://bioconductor.org/packages/release/bioc/html/qvalue.html)]
+
+---
+layout: false
+class: center middle
+
+.font4[.alert[IHW idea]]
+
+```{r fig1,out.width=1000,echo=FALSE}
+
+knitr::include_graphics("paper_figs/fig1.jpg")
+
+```
+
+.font2.black[
+
+.left[
+
+.content[
+
+.alert[a)] Typical multiple testing diagnostic plot for all p.values, .alert[b-c)] p.values from .alert[(a)] divided into 3 strata. For a good partition, there are going to be more discoveries in .alert[(b-c)] than in .alert[(a)].
+
+]
+]]
+
+---
+layout: false
+class: center middle
+
+.font4[.alert[IHW ideas]]
+
+.font2.left[.alert[1.] Given pairs of p.values and covariates] 
+
+.font1[
+\begin{aligned}
+(p_i,x_i),\quad i=1,\cdots,m
+\end{aligned}
+]
+
+.font2.left[generate a partition of the pairs into G groups.]
+
+.font2.left[.alert[2.] Given a partition of the m tests, into G groups, replace:]
+
+.font1[
+\begin{aligned}
+\widehat{\mbox{FDR}}(t) &= \hat{\pi}_0 (\lambda) mt / (R(t)\wedge 1)
+\end{aligned}
+]
+
+.font1[
+\begin{aligned}
+\widehat{\mbox{FDR}}(t,w ) &= \sum_{g=1}^G m_g w_g t_g / (R(t,w)\wedge 1)
+\end{aligned}
+]
+
+.font2.left[The idea is estimate the weights that give the highest number of discoveries, the partition is based on a covariate independent to the p.values.]
+
+---
+layout: false
+class: left top
+
+.font4.center[.alert[Gene expression example]]
+
+.font2[Typical .alert[DESeq2] workflow, on a gene expression dataset]
+
+```{r data_load,include=FALSE,echo=FALSE,eval=TRUE}
+
+data("airway", package = "airway")
+
+```
+
+.font2[The .alert[airway] dataset has `r nrow(airway) %>% prettyNum(big.mark = ",")` genes, and `r ncol(airway)` samples (4 cells x 2 treatments)]
+
+```{r deseq_call,include=TRUE,echo = TRUE,message=FALSE,cache=TRUE}
+
+library("DESeq2")
+library("dplyr")
+data("airway", package = "airway")
+dds <- DESeqDataSet(se = airway, design = ~ cell + dex) 
+dds <- DESeq(dds)
+deRes <- as.data.frame(results(dds))
+
+```
+
+.font2[Formula based approach to use .alert[IHW]]
+
+```{r ihw_call,include=TRUE,echo=TRUE,message=FALSE,cache=TRUE,dependson="deseq_call"}
+
+library("IHW")
+ihwRes <- ihw(pvalue ~ baseMean,  data = deRes, alpha = 0.1)
+
+```
+
+---
+layout: false
+class: left top
+
+.font4.center[.alert[Quick comparison]]
+
+.font2[Using a significance threshold of 0.1, we can notice]
+
+```{r checkup,include=TRUE,echo=TRUE,eval=TRUE,cache=TRUE,dependson="ihw_call"}
+
+rejections(ihwRes)
+
+padjBH <- p.adjust(deRes$pvalue, method = "BH")
+sum(padjBH <= 0.1, na.rm = TRUE)
+
+```
+
+.font2[.alert[We get more rejections, i.e. more discoveries!]]
+
+---
+layout: false
+class: left middle 
+
+.split-two[
+
+.column[.content[
+
+.center.top[.font3.alert[Diagnostics]]
+
+```{r strata-code,eval=FALSE,echo=TRUE,include=TRUE}
+plot(ihwRes)
+```
+
+
+```{r stratum,echo=FALSE,include=TRUE,eval=FALSE}
+plot(ihwRes)+
+  theme(
+    legend.position = c(.1,.6)
+  )+scale_color_npg()
+```
+
+.font2[.alert[G = 22] strata and do .alert[5-fold CV]]
+
+```{r boundarycode,include=TRUE,echo=TRUE,eval=FALSE}
+plot(ihwRes,what = "decisionboundary")
+```
+
+
+```{r boundary,echo=FALSE,eval=TRUE,include=TRUE,fig.width=7.5,fig.height=5,out.width=400, dpi = 1200}
+
+plot(ihwRes,what = "decisionboundary")+scale_color_npg()+
+  scale_fill_viridis_c()
+
+```
+
+
+
+]]
+
+.column[.content[
+
+.middle[
+```{r stratum-out,echo=FALSE,include=TRUE,eval=TRUE,ref.label="stratum",fig.width=7.5,fig.height=4.5,out.width=500,dpi = 1200}
+```
+]
+
+.font2[
+
+The weights are driven by the total number of reads, for strata with low reads the weights are .alert[nearly zero]
+
+]
+
+
+]]]
+
+
+---
+layout: false
+class: top left
+
+.font4.center[.alert[Bad covariate selection]]
+
+```{r bad_cov,include=TRUE,echo=FALSE,eval=TRUE,fig.width=10,fig.height=3,out.width=900,dpi = 1200,warning=FALSE}
+deRes <- na.omit(deRes)
+deRes$geneid <- as.numeric(gsub("ENSG[+]*", "", rownames(deRes)))
+
+# set up data frame for ggplotting
+rbind(data.frame(pvalue = deRes$pvalue, covariate = rank(deRes$baseMean)/nrow(deRes), 
+                 covariate_type="base mean"),
+      data.frame(pvalue = deRes$pvalue, covariate = rank(deRes$geneid)/nrow(deRes), 
+                 covariate_type="gene id")) %>%
+ggplot(aes(x = covariate, y = -log10(pvalue))) + geom_hex(bins = 51) + 
+   facet_grid( . ~ covariate_type) + ylab(expression(-log[10]~p))+
+  scale_fill_viridis_c()+
+  scale_y_continuous(limits = c(0,20))
+```
+
+.font2[
+
+.alert[in the left panel] mean expression is correlated with the p.values, while
+.alert[in the right panel] the gene id's are not 
+
+]
+
+---
+layout: false
+class: top left
+
+.split-two[
+
+.column[.content[
+
+.font3.center[.alert[Good covariate: avg expression]]
+
+.center[
+.content[
+
+```{r deseq_hist,include=TRUE,echo=FALSE,eval=TRUE,dpi=1200,fig.width=5,fig.height=3,out.width=350}
+
+ggplot(deRes, aes(x = pvalue)) +
+  geom_histogram(binwidth = 0.025, boundary = 0,fill="white",colour = "black")
+
+```
+
+```{r ihw_ecdf,include=TRUE,echo=FALSE,eval=TRUE,dpi=1200,fig.width=5,fig.height=3,out.width=350}
+
+deRes$baseMeanGroup <- groups_by_filter(deRes$baseMean, 8)
+ggplot(deRes, aes(x = pvalue, col = baseMeanGroup)) + stat_ecdf(geom = "step") +
+  labs(colour = "base mean\ngroup")+
+  scale_color_npg()+
+  labs(y = "F(pvalue)")
+
+```
+
+
+
+]]
+
+
+]]
+
+.column[.content[
+
+
+```{r ihw_hist,include=TRUE,echo=FALSE,eval=TRUE,dpi=1200,fig.width=5,fig.height=10,out.width=330}
+
+ggplot(deRes, aes(x = pvalue)) +
+  geom_histogram(binwidth = 0.025, boundary = 0,fill="white",colour = "black")+
+  facet_wrap( ~ baseMeanGroup, nrow = 4)
+
+```
+
+
+]]]
+
+
+---
+layout: false
+class: top left
+
+.split-two[
+
+.column[.content[
+
+.font3.center[.alert[Bad covariate: fold change]]
+
+.center[
+.content[
+
+```{r deseq_hist2,include=TRUE,echo=FALSE,eval=TRUE,dpi=1200,fig.width=5,fig.height=3,out.width=350}
+
+ggplot(deRes, aes(x = pvalue)) +
+  geom_histogram(binwidth = 0.025, boundary = 0,fill="white",colour = "black")
+
+```
+
+```{r ihw_ecdf2,include=TRUE,echo=FALSE,eval=TRUE,dpi=1200,fig.width=5,fig.height=3,out.width=350}
+
+deRes$baseMeanGroup <- groups_by_filter(abs(deRes$log2FoldChange),8)
+ggplot(deRes, aes(x = pvalue, col = baseMeanGroup)) + stat_ecdf(geom = "step") +
+  labs(colour = "fc group")+
+  scale_color_npg()+
+  labs(y = "F(pvalue)")
+
+```
+
+
+
+]]
+
+
+]]
+
+.column[.content[
+
+
+```{r ihw_hist2,include=TRUE,echo=FALSE,eval=TRUE,dpi=1200,fig.width=5,fig.height=10,out.width=330}
+
+ggplot(deRes, aes(x = pvalue)) +
+  geom_histogram(binwidth = 0.025, boundary = 0,fill="white",colour = "black")+
+  facet_wrap( ~ baseMeanGroup, nrow = 4)
+
+```
+
+
+]]]
+
+
+
+
+---
+layout: false
+class: center middle
+
+.font4[.alert[Covariate ideas]]
+
+```{r covariates,include=TRUE,echo=FALSE,out.height=800,message=FALSE}
+
+"extra/covariates.txt" %>% 
+  read_tsv() %>% 
+  knitr::kable() %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"),font_size = 32)
+
+
+```
+
+
+---
+layout: false
 class: middle center bg-main1
 
-
-.font5[.light-green[Extra slides]]
+.font5[.alert[Extra slides]]
 
 ---
 layout: false
 class: middle center
 
-.font4[.light-green[[qvalue](http://bioconductor.org/packages/release/bioc/html/qvalue.html) is equivalent to BH]]
+.font4[.alert[[qvalue](http://bioconductor.org/packages/release/bioc/html/qvalue.html) is equivalent to BH]]
 
 ```{r qvalue,include=TRUE,out.width=530,echo= FALSE}
 
@@ -126,4 +480,20 @@ knitr::include_graphics("paper_figs/qvalue.png",dpi = 1200)
 
 ```
 
+---
+layout: false
+class: top center bg-main1
+
+.font5[.alert[Links]]
+
+.font2.left[
+
+- [Data-driven hypothesis weighting increases detection power in genome-scale multiple testing](https://www.nature.com/articles/nmeth.3885)
+
+- [Bioconductor IHW package](http://bioconductor.org/packages/release/bioc/html/IHW.html), [vignette](http://bioconductor.org/packages/release/bioc/vignettes/IHW/inst/doc/introduction_to_ihw.html)
+
+- [Bioconductor qvalue package](http://bioconductor.org/packages/release/bioc/html/qvalue.html), [vignette](http://bioconductor.org/packages/release/bioc/vignettes/qvalue/inst/doc/qvalue.pdf)
+
+
+]
 
