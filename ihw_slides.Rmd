@@ -56,21 +56,6 @@ knitr::include_graphics("paper_figs/paper.png",dpi = 1200)
 
 ---
 layout: false
-class: middle center
-
-.font5[.alert[Why this paper?]]
-
-.font3.black[
-
-This is a very general method to do .alert[multiple hypothesis testing]
-
-Can dramatically improve the number of discoveries, while controlling the .alert[false discovery rate]
-
-]
-
-
----
-layout: false
 class: top center
 
 .font4[.alert[Multiple hypothesis testing]]
@@ -171,7 +156,7 @@ knitr::include_graphics("paper_figs/fig1.jpg")
 layout: false
 class: center middle
 
-.font4[.alert[IHW ideas]]
+.font4[.alert[IHW idea]]
 
 .font2.left[.alert[1.] Given pairs of p.values and covariates] 
 
@@ -198,6 +183,88 @@ class: center middle
 ]
 
 .font2.left[The idea is estimate the weights that give the highest number of discoveries, the partition is based on a covariate independent to the p.values.]
+
+---
+layout: false
+class: left middle
+
+.split-two[
+
+.column[
+.content[
+
+.font3.center[.alert[IHW idea]]
+
+.center[
+```{r tdr,include=TRUE,echo=FALSE,out.width=450}
+
+knitr::include_graphics("paper_figs/fig3tdr.png",dpi = 1200)
+
+```
+
+.font1[
+\begin{aligned}
+f(p) &= \pi_0 f_0(p) + \pi_1 f_1(p) \\
+\mbox{tdr}(p) &= \frac{\pi_1 f_1(p)}{f(p)}
+\end{aligned}
+
+]
+
+]
+]]
+
+.column[
+.content[
+
+.font2[
+
+.alert[a)] Schematic representation of the density f, .alert[b–d)] The .alert[tdr] of individual tests can vary.
+
+.alert[b)] The test has high power, and π0,i is well below 1
+
+.alert[c)] The test has equal power, but π0,i is higher, leading to a reduced .alert[tdr]
+
+.alert[d)] π0,i is as in .alert[b)], but the test has little power, again leading to a reduced .alert[tdr]
+]
+
+]]]
+
+
+---
+layout: false
+class: center middle
+
+.split-two[
+
+.column[
+.content[
+.font3[.alert[IHW idea]]
+
+```{r fig3,include=TRUE,echo=FALSE,out.width=450}
+
+knitr::include_graphics("paper_figs/fig3boundary.png",dpi = 1200)
+
+```
+
+.font2.left[
+
+.alert[e)] If an informative covariate is associated with each test, the distribution of the P-values from multiple tests is different for different values of the covariate. 
+]
+
+
+]]
+
+.column[.content[
+.font2.left[
+
+.red[BH] accounts only for the P-values and not the covariates
+In contrast, the decision boundary of .blue[IHW] is a step function: each step corresponds to one weight
+
+
+.alert[f)] The .alert[tdr's density] also depends on the covariate. The decision boundary of .red[BH] leads to a suboptimal set of discoveries. In contrast, .blue[IHW] approximates a line of constant .alert[tdr], i.e. the .alert[FDR budget's] use is  more efficient
+
+]]]
+]
 
 ---
 layout: false
@@ -241,7 +308,7 @@ class: left top
 
 .font4.center[.alert[Quick comparison]]
 
-.font2[Using a significance threshold of 0.1, we can notice]
+.font2[Using a significance threshold of α = 0.1, we can notice]
 
 ```{r checkup,include=TRUE,echo=TRUE,eval=TRUE,cache=TRUE,dependson="ihw_call"}
 
@@ -369,7 +436,7 @@ ggplot(deRes, aes(x = pvalue, col = baseMeanGroup)) + stat_ecdf(geom = "step") +
 
 ```
 
-
+.font2[The groups on the .alert[right] looks like the histogram on the .alert[left]]
 
 ]]
 
@@ -421,7 +488,7 @@ ggplot(deRes, aes(x = pvalue, col = baseMeanGroup)) + stat_ecdf(geom = "step") +
 
 ```
 
-
+.font2[All groups look .alert[different]]
 
 ]]
 
@@ -443,6 +510,71 @@ ggplot(deRes, aes(x = pvalue)) +
 ]]]
 
 
+---
+layout: false
+class: middle center
+
+.font5[.alert[Why this paper?]]
+
+.font3.black[
+
+This is a very general method to do .alert[multiple hypothesis testing]
+
+Can dramatically improve the number of discoveries, while controlling the .alert[false discovery rate]
+
+]
+
+
+---
+layout: false
+class: middle left
+
+.split-two[
+
+.column[.content[
+
+.font3.center[.alert[Many data types]]
+
+.center[
+.content[
+
+
+```{r manydata1,out.width=400,include=TRUE,echo=FALSE,eval=TRUE}
+knitr::include_graphics("paper_figs/fig2a.png",dpi = 1200)
+
+```
+
+
+.font2.left[
+.alert[a)] RNA-seq data with mean of normalized counts for each gene as the covariate
+
+.alert[b)] Hyperplexed mass-spectrometry data with number of peptides quantified per protein as the covariate 
+]
+
+
+]]
+
+
+]]
+
+.column[.content[
+
+
+```{r manydata2,out.width=400,include=TRUE,echo=FALSE,eval=TRUE}
+knitr::include_graphics("paper_figs/fig2b.png",dpi = 1200)
+
+```
+
+.font2.left[
+
+.alert[c)] histone QTL (hQTL) data set16 for chromosome 21, with genomic distance between SNPs and ChIP-seq signals as the covariate. Independent filtering with different distance cutoffs was also applied. 
+.alert[d)] Weight function learned by IHW at α = 0.1 for the hQTL data set
+
+
+]
+
+
+]]]
 
 
 ---
@@ -482,7 +614,7 @@ knitr::include_graphics("paper_figs/qvalue.png",dpi = 1200)
 
 ---
 layout: false
-class: top center bg-main1
+class: middle center bg-main1
 
 .font5[.alert[Links]]
 
