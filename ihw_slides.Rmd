@@ -56,6 +56,21 @@ knitr::include_graphics("paper_figs/paper.png",dpi = 1200)
 
 ---
 layout: false
+class: middle center
+
+.font5[.alert[Why this paper?]]
+
+.font3.black[
+
+This is a very general method to do .alert[multiple hypothesis testing]
+
+Can dramatically improve the number of discoveries, while controlling the .alert[false discovery rate]
+
+]
+
+
+---
+layout: false
 class: top center
 
 .font4[.alert[Multiple hypothesis testing]]
@@ -100,7 +115,7 @@ class: top center
 | total | W | R| m | 
 ]
 
-want to control .alert[FDR = E[V/R | R > 0]P(R > 0)]
+want to control .alert[FDR = E[V/R | R > 0]P(R > 0)] (will work with .alert[pFDR = E[V/R | R > 0]] instead)
 
 ]]
 
@@ -168,21 +183,16 @@ class: center middle
 
 .font2.left[generate a partition of the pairs into G groups.]
 
-.font2.left[.alert[2.] Given a partition of the m tests, into G groups, replace:]
+.font2.left[.alert[2.] Given a partition of the m tests, into G groups, replace .alert[FDR] :]
 
 .font1[
 \begin{aligned}
-\widehat{\mbox{FDR}}(t) &= \hat{\pi}_0 (\lambda) mt / (R(t)\wedge 1)
+\widehat{\mbox{FDR}}(t,w ) &= \sum_{g=1}^G m_g w_g t_g / (R(t,w)\wedge 1) \\
+\max \sum_{g=1}^G m_g &\hat{F}_g(w_gt_g)\quad \text{s.t. } \widehat{\mbox{FDR}}(t,w)\leq \alpha
 \end{aligned}
 ]
 
-.font1[
-\begin{aligned}
-\widehat{\mbox{FDR}}(t,w ) &= \sum_{g=1}^G m_g w_g t_g / (R(t,w)\wedge 1)
-\end{aligned}
-]
-
-.font2.left[The idea is estimate the weights that give the highest number of discoveries, the partition is based on a covariate independent to the p.values.]
+.font2.left[The idea is to estimate the weights that give the highest number of discoveries, the partition is based on a covariate that is independent to the p.values.]
 
 ---
 layout: false
@@ -602,6 +612,52 @@ class: middle center bg-main1
 
 ---
 layout: false
+class: top left split-two
+
+.column[
+.content[
+.font3.center[.alert[BH]]
+
+.font2[
+Given a $m$ tests, i.e. p.values $p_1,\cdots,p_m$:
+
+1. Sort the p.values $p_{(1)}\leq \cdots p_{(m)}$
+
+2. Calculate $\hat{k} = \mbox{argmax} \{k: p_{(k)}\leq \alpha k /m \}$
+
+3. Reject the hypothesis corresponding to $p_{(1)}\leq \cdots\leq p_{(k)}$
+
+.alert[Note:] If $\hat{\pi}(\lambda) =1$, then equiv. to .alert[q.values]
+]
+
+]]
+
+
+.column[
+.content[
+.font3.center[.alert[q-value]]
+
+.font2[
+
+Recall, we estimate:
+\begin{aligned}
+\widehat{\mbox{FDR}}(t) &= \hat{\pi}_0 (\lambda) mt / (R(t)\wedge 1) \\
+\hat{\pi}(\lambda) &= \frac{\#(p_i > \lambda) }{m(1-\lambda)}
+\end{aligned}
+
+q.values are defined:
+
+\begin{aligned}
+q_i(p_i) &= \min_{t \geq p_i} \widehat{\mbox{FDR}}(t)
+\end{aligned}
+
+
+]
+
+]]
+
+---
+layout: false
 class: middle center
 
 .font4[.alert[[qvalue](http://bioconductor.org/packages/release/bioc/html/qvalue.html) is equivalent to BH]]
@@ -624,8 +680,9 @@ class: middle center bg-main1
 
 - [Bioconductor IHW package](http://bioconductor.org/packages/release/bioc/html/IHW.html), [vignette](http://bioconductor.org/packages/release/bioc/vignettes/IHW/inst/doc/introduction_to_ihw.html)
 
-- [Bioconductor qvalue package](http://bioconductor.org/packages/release/bioc/html/qvalue.html), [vignette](http://bioconductor.org/packages/release/bioc/vignettes/qvalue/inst/doc/qvalue.pdf)
+- [The positive False Discovery Rate: A bayesian interpretation and the q-value](https://projecteuclid.org/download/pdf_1/euclid.aos/1074290335)
 
+- [Bioconductor qvalue package](http://bioconductor.org/packages/release/bioc/html/qvalue.html), [vignette](http://bioconductor.org/packages/release/bioc/vignettes/qvalue/inst/doc/qvalue.pdf)
 
 ]
 
